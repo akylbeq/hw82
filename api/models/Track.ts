@@ -1,10 +1,18 @@
 import mongoose, {Schema} from "mongoose";
+import Album from "./Album";
 
 const TrackSchema = new Schema({
     album: {
         type: Schema.Types.ObjectId,
         ref: "Album",
-        required: true
+        required: true,
+        validate: {
+            validator: async (value: string) => {
+                const album = await Album.findById(value);
+                return Boolean(album);
+            },
+            message: 'Album not found',
+        }
     },
     name: {
         type: String,

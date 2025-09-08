@@ -1,10 +1,18 @@
 import mongoose, {Schema} from "mongoose";
+import Artist from "./Artist";
 
 const AlbumSchema = new Schema({
     artist: {
         type: Schema.Types.ObjectId,
         ref: "Artist",
-        required: true
+        required: true,
+        validate: {
+            validator: async (value: string) => {
+                const isValid = await Artist.findById(value);
+                return Boolean(isValid);
+            },
+            message: 'Artist not found.'
+        }
     },
     name: {
         type: String,
