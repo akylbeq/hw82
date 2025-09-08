@@ -11,10 +11,6 @@ tracksRouter.get('/', async (req, res) => {
         if (album) {
             const tracks = await Track.find({album})
 
-            if (!album) {
-                return res.status(404).json({error: 'No such track found'});
-            }
-
             return res.status(200).json(tracks);
         }
 
