@@ -1,20 +1,25 @@
 import express from "express";
 import {uploadImage} from "../multer";
 import Album from "../models/Album";
+import Track from "../models/Track";
 
 const albumsRouter = express.Router();
 
 albumsRouter.get("/", async (req, res) => {
    try {
-       const query = req.query.artist;
+       const {artist} = req.query;
 
-       if (query) {
-           const albums = await Album.find({artist: query})
-           return res.status(200).json(albums)
-       }
-
-       const albums = await Album.find();
-       res.status(200).json(albums)
+       let albums = artist ? await Album.find({artist}).populate('artist').sort({releaseDate: -1}) : await Album.find();
+       const albumWithCount = await Promise.all(
+           albums.map(async (album) => {
+               const count = await Track.countDocuments({album: album._id});
+               return {
+                   ...album.toObject(),
+                   count,
+               };
+           })
+       )
+       res.status(200).json(albumWithCount)
    } catch (error) {
        res.status(500).json({error: 'Internal Server Error'});
    }

@@ -9,7 +9,12 @@ tracksRouter.get('/', async (req, res) => {
         const {album, artist} = req.query;
 
         if (album) {
-            const tracks = await Track.find({album})
+            const tracks = await Track.find({album}).populate({
+                path: 'album',
+                populate: {
+                    path: 'artist'
+                }
+            })
 
             return res.status(200).json(tracks);
         }

@@ -6,6 +6,7 @@ import tracksRouter from "./routers/tracks";
 import usersRouter from "./routers/users";
 import trackhistory from "./routers/trackhistory";
 import cors from "cors";
+import config from "./config";
 
 const app = express();
 const port = 8001;
@@ -21,7 +22,7 @@ app.use('/user', usersRouter);
 app.use('/history', trackhistory);
 
 const run = async () => {
-    await mongoose.connect('mongodb://localhost/music');
+    await mongoose.connect(config.db);
 
     app.listen(port, () => {
         console.log(`Listening on port ${port}`);
