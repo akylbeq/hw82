@@ -13,8 +13,6 @@ trackHistoryRouter.post("/", async (req, res) => {
             return res.status(401).send({ error: "No token provided" });
         }
 
-        console.log(authorization);
-
         const user = await User.findOne({token: authorization});
 
         if (!user) {

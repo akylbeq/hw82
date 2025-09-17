@@ -1,9 +1,9 @@
 import express from "express";
 import User from "../models/User";
 
-const userRouter = express.Router();
+const usersRouter = express.Router();
 
-userRouter.post('/', async (req, res) => {
+usersRouter.post('/', async (req, res) => {
     try {
 
         if (!req.body.username.trim() || !req.body.password.trim()) {
@@ -25,7 +25,7 @@ userRouter.post('/', async (req, res) => {
     }
 });
 
-userRouter.post('/session', async (req, res) => {
+usersRouter.post('/session', async (req, res) => {
     try {
         if (!req.body.username.trim() || !req.body.password.trim()) {
             return res.status(400).send({error: "Username and password are required"});
@@ -55,4 +55,4 @@ userRouter.post('/session', async (req, res) => {
     }
 })
 
-export default userRouter;
+export default usersRouter;

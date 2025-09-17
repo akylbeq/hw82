@@ -19,8 +19,9 @@ const AlbumSchema = new Schema({
         required: true
     },
     releaseDate: {
-        type: String,
-        required: true
+        type: Date,
+        required: true,
+        default: new Date(),
     },
     image: String,
 });
