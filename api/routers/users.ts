@@ -10,6 +10,12 @@ usersRouter.post('/', async (req, res) => {
             return res.status(400).send({error: "Username and password are required"});
         }
 
+        const check = await User.findOne({username: req.body.username});
+
+        if (!check) {
+            return res.status(400).send({error: "Username already in use"});
+        }
+
         const user = new User({
             username: req.body.username,
             password: req.body.password
@@ -31,20 +37,20 @@ usersRouter.post('/session', async (req, res) => {
             return res.status(400).send({error: "Username and password are required"});
         }
 
-        const user = await User.find({username: req.body.username});
+        const user = await User.findOne({username: req.body.username});
 
         if (!user) {
             return res.status(400).send({error: "User does not exist"});
         }
 
-        const isMath = await user[0].checkPassword(req.body.password);
+        const isMath = await user.checkPassword(req.body.password);
 
         if (!isMath) {
             return res.status(400).send({error: "Incorrect password"});
         }
 
-        user[0].generateToken();
-        await user[0].save();
+        user.generateToken();
+        await user.save();
         res.status(200).json(user);
 
     } catch (err) {

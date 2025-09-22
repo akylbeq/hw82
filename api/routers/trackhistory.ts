@@ -25,6 +25,14 @@ trackHistoryRouter.post("/", async (req, res) => {
             return res.status(404).send({ error: "Track not found" });
         }
 
+        const isListened = await TrackHistory.findOne({track});
+
+        if (isListened) {
+            isListened.datetime = new Date();
+            await isListened.save();
+            return res.status(200).send(isListened);
+        }
+
         const trackHistory = new TrackHistory({
             user: user._id,
             track: track._id,
@@ -40,5 +48,38 @@ trackHistoryRouter.post("/", async (req, res) => {
         res.status(500).send({ error: "Server error" });
     }
 });
+
+trackHistoryRouter.get("/", async (req, res) => {
+    try {
+        const authorization = req.headers.authorization;
+
+        if (!authorization) {
+            return res.status(401).send({ error: "No token provided" });
+        }
+
+        const user = await User.findOne({token: authorization});
+
+        if (!user) {
+            return res.status(401).send({ error: "Unauthorized" });
+        }
+
+        const history = await TrackHistory.find({user: user._id}).populate({
+            path: 'track',
+            populate: {
+                path: 'album',
+                populate: {
+                    path: 'artist',
+                }
+            }
+        })
+
+        res.status(200).send(history);
+    } catch (err) {
+        if (err instanceof Error) {
+            return res.status(400).send({ error: err.message });
+        }
+        res.status(500).send({ error: "Server error" });
+    }
+})
 
 export default trackHistoryRouter;

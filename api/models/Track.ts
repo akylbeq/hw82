@@ -20,6 +20,7 @@ const TrackSchema = new Schema({
     },
     duration: String,
     number: Number,
+    video: String,
 });
 
 TrackSchema.pre('save', async function (next) {
