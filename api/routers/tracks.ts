@@ -3,15 +3,18 @@ import Track from "../models/Track";
 import Album from "../models/Album";
 import auth from "../middleware/auth";
 import permit from "../middleware/permit";
+import User from "../models/User";
 
 const tracksRouter = express.Router();
 
 tracksRouter.get('/', async (req, res) => {
     try {
         const {album, artist} = req.query;
-
+        const token = req.get("Authorization");
+        const user = await User.findOne({ token });
+        let filter = user?.role === "admin" ? {} : { isPublished: true };
         if (album) {
-            const tracks = await Track.find({album}).populate({
+            const tracks = await Track.find({...filter, album}).populate({
                 path: 'album',
                 populate: {
                     path: 'artist'
@@ -44,12 +47,13 @@ tracksRouter.get('/', async (req, res) => {
 
 tracksRouter.post('/', auth, async (req, res) => {
     try {
-        const {album, name, duration} = req.body;
+        const {album, name, duration, video} = req.body;
 
         const track = new Track({
             album,
             name,
             duration,
+            video
         });
         await track.save();
         res.status(200).json(track);

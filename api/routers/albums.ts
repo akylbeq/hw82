@@ -1,35 +1,49 @@
 import express from "express";
 import {uploadImage} from "../multer";
 import Album from "../models/Album";
-import Track from "../models/Track";
 import auth from "../middleware/auth";
 import permit from "../middleware/permit";
+import User from "../models/User";
 
 const albumsRouter = express.Router();
 
 albumsRouter.get("/", async (req, res) => {
-   try {
-       const {artist} = req.query;
+    try {
+        const {artist} = req.query as { artist: string };
 
-       let albums = artist ? await Album.find({artist}).populate('artist').sort({releaseDate: -1}) : await Album.find();
-       const albumWithCount = await Promise.all(
-           albums.map(async (album) => {
-               const count = await Track.countDocuments({album: album._id});
-               return {
-                   ...album.toObject(),
-                   count,
-               };
-           })
-       )
-       res.status(200).json(albumWithCount)
-   } catch (error) {
-       res.status(500).json({error: 'Internal Server Error'});
-   }
+        const token = req.get("Authorization");
+        const user = await User.findOne({ token });
+
+        const filter: Partial<{ artist: string; isPublished: boolean }> =
+            user?.role === "admin" ? {} : { isPublished: true };
+
+        if (artist) {
+            filter.artist = artist;
+        }
+
+        const albums = await Album.find(filter)
+            .populate("artist")
+            .sort({ releaseDate: -1 });
+
+        res.status(200).json(albums);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
+
 
 albumsRouter.get("/:id", async (req, res) => {
    try {
-       const album = await Album.findById(req.params.id).populate('artist');
+       const token = req.get("Authorization");
+       const user = await User.findOne({ token });
+
+       let filter = user?.role === "admin" ? {} : { isPublished: true };
+       const album = await Album.findOne({
+           ...filter,
+           _id: req.params.id.toString(),
+       }).populate("artist");
+
 
        if (!album) {
            return res.status(404).json({error: 'Album not found'});

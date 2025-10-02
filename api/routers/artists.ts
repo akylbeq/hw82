@@ -3,12 +3,17 @@ import Artist from "../models/Artist";
 import {uploadImage} from "../multer";
 import auth from "../middleware/auth";
 import permit from "../middleware/permit";
+import User from "../models/User";
 
 const artistsRouter = express.Router();
 
 artistsRouter.get("/", async (req, res) => {
     try {
-        const artists = await Artist.find();
+        const token = req.get("Authorization");
+        const user = await User.findOne({token});
+        let filter = user?.role === 'admin' ? {} : {isPublished: true}
+
+        const artists = await Artist.find(filter);
 
         res.status(200).json(artists);
     } catch (error) {
