@@ -21,6 +21,10 @@ const TrackSchema = new Schema({
     duration: String,
     number: Number,
     video: String,
+    isPublished: {
+        type: Boolean,
+        default: false
+    }
 });
 
 TrackSchema.pre('save', async function (next) {

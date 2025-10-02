@@ -10,12 +10,6 @@ usersRouter.post('/', async (req, res) => {
             return res.status(400).send({error: "Username and password are required"});
         }
 
-        const check = await User.findOne({username: req.body.username});
-
-        if (!check) {
-            return res.status(400).send({error: "Username already in use"});
-        }
-
         const user = new User({
             username: req.body.username,
             password: req.body.password
@@ -52,6 +46,28 @@ usersRouter.post('/session', async (req, res) => {
         user.generateToken();
         await user.save();
         res.status(200).json(user);
+
+    } catch (err) {
+        if (err instanceof Error) {
+            return res.status(400).send({error: err.message});
+        }
+        res.status(500).send({error: 'server error'});
+    }
+});
+
+usersRouter.delete('/session', async (req, res) => {
+    try {
+        const token = req.get('Authorization');
+        if (!token) {
+            return res.status(400).send({error: "token not provided"});
+        }
+        const user = await User.findOne({token});
+        if (!user) {
+            return res.status(400).send({error: "Wrong token"});
+        }
+        user.generateToken();
+        user.save();
+        res.status(204).json('success');
 
     } catch (err) {
         if (err instanceof Error) {

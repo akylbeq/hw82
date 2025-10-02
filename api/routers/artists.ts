@@ -1,6 +1,8 @@
 import express from "express";
 import Artist from "../models/Artist";
 import {uploadImage} from "../multer";
+import auth from "../middleware/auth";
+import permit from "../middleware/permit";
 
 const artistsRouter = express.Router();
 
@@ -14,7 +16,7 @@ artistsRouter.get("/", async (req, res) => {
     }
 });
 
-artistsRouter.post("/", uploadImage.single('image'), async (req, res) => {
+artistsRouter.post("/", auth, uploadImage.single('image'), async (req, res) => {
     try {
         const {name, description} = req.body;
 
@@ -33,6 +35,46 @@ artistsRouter.post("/", uploadImage.single('image'), async (req, res) => {
         }
         res.status(500).json({error: 'Internal Server Error'});
     }
-})
+});
+
+artistsRouter.delete("/:id", auth, permit('admin'), async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        const artist = await Artist.findByIdAndDelete(id);
+
+        if (!artist) {
+            return res.status(404).json({error: 'No Artist with this ID'});
+        }
+
+        res.status(200).json('Delete successfully');
+    } catch (error) {
+        if (error instanceof Error) {
+            return res.status(400).json({error: error.message});
+        }
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+});
+
+artistsRouter.patch("/:id/togglePublished", auth, permit('admin'), async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        const artist = await Artist.findById(id);
+
+        if (!artist) {
+            return res.status(404).json({error: 'No Artist with this ID'});
+        }
+
+        const update = await Artist.findByIdAndUpdate(id, {isPublished: !artist.isPublished}, {new: true})
+
+        res.status(200).json(update);
+    } catch (error) {
+        if (error instanceof Error) {
+            return res.status(400).json({error: error.message});
+        }
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+});
 
 export default artistsRouter;

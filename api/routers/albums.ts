@@ -2,6 +2,8 @@ import express from "express";
 import {uploadImage} from "../multer";
 import Album from "../models/Album";
 import Track from "../models/Track";
+import auth from "../middleware/auth";
+import permit from "../middleware/permit";
 
 const albumsRouter = express.Router();
 
@@ -40,7 +42,7 @@ albumsRouter.get("/:id", async (req, res) => {
    }
 });
 
-albumsRouter.post("/", uploadImage.single('image'), async (req, res) => {
+albumsRouter.post("/", auth, uploadImage.single('image'), async (req, res) => {
     try {
         const {artist, name, releaseDate} = req.body;
 
@@ -58,6 +60,46 @@ albumsRouter.post("/", uploadImage.single('image'), async (req, res) => {
             return res.status(400).json({error: error.message});
         }
 
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+});
+
+albumsRouter.delete("/:id", auth, permit('admin'), async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        const album = await Album.findByIdAndDelete(id);
+
+        if (!album) {
+            return res.status(404).json({error: 'No Album with this ID'});
+        }
+
+        res.status(200).json('Delete successfully');
+    } catch (error) {
+        if (error instanceof Error) {
+            return res.status(400).json({error: error.message});
+        }
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+});
+
+albumsRouter.patch("/:id/togglePublished", auth, permit('admin'), async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        const album = await Album.findById(id);
+
+        if (!album) {
+            return res.status(404).json({error: 'No Album with this ID'});
+        }
+
+        const update = await Album.findByIdAndUpdate(id, {isPublished: !album.isPublished}, {new: true})
+
+        res.status(200).json(update);
+    } catch (error) {
+        if (error instanceof Error) {
+            return res.status(400).json({error: error.message});
+        }
         res.status(500).json({error: 'Internal Server Error'});
     }
 });

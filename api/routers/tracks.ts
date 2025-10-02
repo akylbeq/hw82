@@ -1,6 +1,8 @@
 import express from 'express';
 import Track from "../models/Track";
 import Album from "../models/Album";
+import auth from "../middleware/auth";
+import permit from "../middleware/permit";
 
 const tracksRouter = express.Router();
 
@@ -40,7 +42,7 @@ tracksRouter.get('/', async (req, res) => {
     }
 });
 
-tracksRouter.post('/', async (req, res) => {
+tracksRouter.post('/', auth, async (req, res) => {
     try {
         const {album, name, duration} = req.body;
 
@@ -57,6 +59,46 @@ tracksRouter.post('/', async (req, res) => {
         }
         res.status(500).json({error: 'Internal Server Error'});
     }
-})
+});
+
+tracksRouter.delete("/:id", auth, permit('admin'), async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        const track = await Track.findByIdAndDelete(id);
+
+        if (!track) {
+            return res.status(404).json({error: 'No Track with this ID'});
+        }
+
+        res.status(200).json('Delete successfully');
+    } catch (error) {
+        if (error instanceof Error) {
+            return res.status(400).json({error: error.message});
+        }
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+});
+
+tracksRouter.patch("/:id/togglePublished", auth, permit('admin'), async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        const track = await Track.findById(id);
+
+        if (!track) {
+            return res.status(404).json({error: 'No Track with this ID'});
+        }
+
+        const update = await Track.findByIdAndUpdate(id, {isPublished: !track.isPublished}, {new: true})
+
+        res.status(200).json(update);
+    } catch (error) {
+        if (error instanceof Error) {
+            return res.status(400).json({error: error.message});
+        }
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+});
 
 export default tracksRouter;

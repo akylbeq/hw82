@@ -18,7 +18,7 @@ app.use(express.static('public'));
 app.use('/artists', artistsRouter);
 app.use('/albums', albumsRouter);
 app.use('/tracks', tracksRouter);
-app.use('/user', usersRouter);
+app.use('/users', usersRouter);
 app.use('/history', trackhistory);
 
 const run = async () => {

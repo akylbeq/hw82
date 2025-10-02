@@ -17,6 +17,16 @@ const UserSchema = new Schema<UserFields, UserModel, UserMethods>({
         type: String,
         required: true,
         unique: true,
+        validate: {
+            validator: async function(str: string): Promise<boolean> {
+                if (!this.isModified('username')) {
+                    return true;
+                }
+                const user = await User.findOne({username: str});
+                return Boolean(!user);
+            },
+            message: "Username already exists"
+        }
     },
     password: {
         type: String,
@@ -25,6 +35,12 @@ const UserSchema = new Schema<UserFields, UserModel, UserMethods>({
     token: {
         type: String,
         required: true,
+    },
+    role: {
+        type: String,
+        required: true,
+        default: 'user',
+        enum: ['user', 'admin'],
     }
 });
 
