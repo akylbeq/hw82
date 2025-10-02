@@ -2,17 +2,19 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks.ts";
 import { useEffect, useRef } from "react";
 import { fetchAlbumTracks } from "./albumThunk.ts";
 import { useParams } from "react-router-dom";
-import { selectTracks } from "./albumSlice.ts";
+import {selectAlbumLoading, selectTracks} from "./albumSlice.ts";
 import { selectUser } from "../users/usersSlice.ts";
-import { IconButton } from "@mui/material";
+import {Button, CircularProgress, IconButton} from "@mui/material";
 import { playSong } from "../History/historyThunk.ts";
-import YouTube, { YouTubePlayer } from "react-youtube";
+import YouTube, {type YouTubeEvent, YouTubePlayer} from "react-youtube";
+import {deleteTrackThunk, publishTrackThunk} from "../track/trackThunk.ts";
 
 const Album = () => {
     const dispatch = useAppDispatch();
     const { id } = useParams();
     const tracks = useAppSelector(selectTracks);
     const user = useAppSelector(selectUser);
+    const loading = useAppSelector(selectAlbumLoading)
 
     const playersRef = useRef<Record<string, YouTubePlayer>>({});
 
@@ -28,15 +30,31 @@ const Album = () => {
         }
     };
 
-    const onPlayerReady = (trackId: string, event: any) => {
+    const onPlayerReady = (trackId: string, event: YouTubeEvent<YouTubePlayer>) => {
         playersRef.current[trackId] = event.target;
     };
+
+    const publishTrack = async (track: string) => {
+        await dispatch(publishTrackThunk(track));
+        if (id) {
+            await dispatch(fetchAlbumTracks(id));
+        }
+    }
+
+    const deleteTrack = async (track: string) => {
+        await dispatch(deleteTrackThunk(track));
+        if (id) {
+            await dispatch(fetchAlbumTracks(id));
+        }
+    }
 
     useEffect(() => {
         if (id) {
             dispatch(fetchAlbumTracks(id));
         }
     }, [id, dispatch]);
+
+    if (loading) return <CircularProgress />;
 
     return (
         <div>
@@ -61,6 +79,33 @@ const Album = () => {
                                     </svg>
                                 </IconButton>
                             )}
+                        </div>
+
+                        <div className="flex gap-2 mt-3">
+                            {user?.role === "admin" && !track.isPublished && (
+
+                                <Button
+                                    variant="contained"
+                                    color="warning"
+                                    size="small"
+                                    sx={{ textTransform: "none", borderRadius: "10px" }}
+                                    onClick={() => publishTrack(track._id)}
+                                >
+                                    Publish
+                                </Button>
+                            )}
+                            {
+                                user?.role === "admin" && <Button
+                                    onClick={() => deleteTrack(track._id)}
+                                    variant="contained"
+                                    color="error"
+                                    size="small"
+                                    sx={{ textTransform: "none", borderRadius: "10px" }}
+                                >
+                                    Delete
+                                </Button>
+                            }
+
                         </div>
 
                         {track.video && user && (

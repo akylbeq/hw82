@@ -6,18 +6,20 @@ import {historyReducer} from "../features/History/historySlice.ts";
 import storage from "redux-persist/lib/storage";
 import { persistReducer, persistStore } from "redux-persist";
 import {FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE} from "redux-persist/es/constants";
+import {trackReducer} from "../features/track/trackSlice.ts";
 
-const userPerisitorConfig = {
-    key: "store:userPerisitor",
+const userPersistConfig = {
+    key: 'shop:users',
     storage,
-    whitelist: ["users"],
-}
+    whitelist: ['user'],
+};
 
 const rootReducer = combineReducers({
     artist: artistReducer,
     album: albumReducer,
-    users: persistReducer(userPerisitorConfig, usersReducer),
+    users: persistReducer(userPersistConfig, usersReducer),
     history: historyReducer,
+    track: trackReducer,
 })
 
 export const store = configureStore({
@@ -25,12 +27,13 @@ export const store = configureStore({
     middleware: (getDefaultMiddleware) => {
         return getDefaultMiddleware({
             serializableCheck: {
-                ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
+                ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
             },
-        })
-    }
+        });
+    },
 });
 
 export const persistor = persistStore(store);
-export type AppDispatch = typeof store.dispatch;
+
 export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

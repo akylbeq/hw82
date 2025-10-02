@@ -1,15 +1,17 @@
-import type {IArtist} from "../../types";
+import type {GlobalError, IArtist} from "../../types";
 import {createSlice} from "@reduxjs/toolkit";
-import {fetchArtists} from "./artistThunk.ts";
+import {createArtist, fetchArtists} from "./artistThunk.ts";
 
 interface ArtistState {
     artist: IArtist[];
     loading: boolean;
+    error: GlobalError | null;
 }
 
 const initialState: ArtistState = {
     artist: [],
     loading: false,
+    error: null,
 }
 
 export const artistSlice = createSlice({
@@ -27,11 +29,22 @@ export const artistSlice = createSlice({
             })
             .addCase(fetchArtists.rejected, (state) => {
                 state.loading = false;
+            })
+            .addCase(createArtist.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(createArtist.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(createArtist.rejected, (state, {payload: error}) => {
+                state.loading = false;
+                state.error = error || null;
             }),
     selectors: {
         selectArtists: (state) => state.artist,
+        selectArtistLoading: (state) => state.loading
     }
 });
 
 export const artistReducer = artistSlice.reducer;
-export const {selectArtists} = artistSlice.selectors;
+export const {selectArtists, selectArtistLoading} = artistSlice.selectors;

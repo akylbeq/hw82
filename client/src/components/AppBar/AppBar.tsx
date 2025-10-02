@@ -1,13 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { useAppSelector } from "../../app/hooks.ts";
+import {useEffect, useState} from 'react';
+import {useAppDispatch, useAppSelector} from "../../app/hooks.ts";
 import { selectUser } from "../../features/users/usersSlice.ts";
-import {Button} from "@mui/material";
+import {Button, Menu, MenuItem} from "@mui/material";
+import React from "react";
+import {logout} from "../../features/users/usersThunk.ts";
 
 const AppBar = () => {
     const user = useAppSelector(selectUser);
     const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         if (user && (location.pathname === '/login' || location.pathname === '/signup')) {
@@ -15,7 +18,18 @@ const AppBar = () => {
         }
     }, [user, location.pathname, navigate]);
 
-    console.log(user)
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const logoutFunc = async () => {
+        await dispatch(logout());
+    };
 
     return (
         <div className="bg-slate-500 p-4 flex justify-between items-center">
@@ -24,7 +38,23 @@ const AppBar = () => {
                 {
                     user ? (
                         <div>
-                            <Button variant="contained" component={Link} to="/track-history">History</Button>
+                            <Button variant="contained" onClick={handleClick}>Menu</Button>
+                            <Menu
+                                anchorEl={anchorEl}
+                                open={open}
+                                onClose={handleClose}
+                                slotProps={{
+                                    list: {
+                                        'aria-labelledby': 'basic-button',
+                                    },
+                                }}
+                            >
+                                <MenuItem component={Link} to="/track-history">History</MenuItem>
+                                <MenuItem component={Link} to="/album/add">Add album</MenuItem>
+                                <MenuItem component={Link} to="/artists/add">Add artist</MenuItem>
+                                <MenuItem component={Link} to="/tracks/add">Add track</MenuItem>
+                                <MenuItem onClick={logoutFunc}>Logout</MenuItem>
+                            </Menu>
                         </div>
                     ) : (
                         <>
